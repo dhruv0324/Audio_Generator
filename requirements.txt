@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+yt-dlp
+pydub
+openai-whisper
+torch
+supervisor
+streamlit
+python-multipart

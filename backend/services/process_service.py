@@ -5,17 +5,22 @@ from pydub import AudioSegment
 import yt_dlp
 import whisper
 import json
-from backend.utils.utils import format_timestamp, append_srt_chunk, save_srt_chunk, convert_srt_time_to_seconds, mark_link_as_processed, is_link_processed
+from backend.utils.utils import format_timestamp, append_srt_chunk, save_srt_chunk, convert_srt_time_to_seconds, mark_link_as_processed, is_link_processed, extract_video_id
 
 # Function to download video and convert to wav with 16000 Hz and mono
-def download_and_convert_to_wav(youtube_url, output_dir, video_num):
+def download_and_convert_to_wav(youtube_url, output_dir):
     try:
         print(f"Downloading: {youtube_url}")
+
+        # Extract the video ID for naming purposes
+        video_id = extract_video_id(youtube_url)
+        if not video_id:
+            return None
 
         # Set up yt-dlp options to download audio only
         ydl_opts = {
             'format': 'bestaudio/best',
-            'outtmpl': os.path.join(output_dir, f'video_{video_num}.%(ext)s'),
+            'outtmpl': os.path.join(output_dir, f'{video_id}.%(ext)s'),
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'wav',
@@ -45,71 +50,44 @@ def download_and_convert_to_wav(youtube_url, output_dir, video_num):
     except Exception as e:
         print(f"An error occurred for {youtube_url}: {e}")
         return None
-    
+
 def format_playlist_url(video_url):
     # Format a YouTube video URL into a playlist URL.
-    
-    # Check if the URL contains a playlist ID
     if 'list=' in video_url:
-        # Extract the playlist ID from the URL
         playlist_id = video_url.split('list=')[1]
-        # Return the formatted playlist URL
         return f"https://www.youtube.com/playlist?list={playlist_id}"
-    
-    # Return the original URL if no playlist ID is found
-    return video_url  
+    return video_url
 
 def extract_video_links_from_playlist(playlist_url):
-    # Extract video links from a formatted YouTube playlist URL.
-    
-    # Format the URL before extracting video links
     formatted_url = format_playlist_url(playlist_url)
     video_links = []
-    
-    # Define options for yt-dlp
     ydl_opts = {
-        'extract_flat': True,  # Extract only video information, do not download
-        'force_generic_extractor': True,  # Use the generic extractor
+        'extract_flat': True,
+        'force_generic_extractor': True,
     }
 
-    # Create a yt-dlp instance with the specified options
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
-            # Extract information from the playlist without downloading
             info = ydl.extract_info(formatted_url, download=False)
-            
-            # Collect the video URLs from the extracted information
             video_links = [entry['url'] for entry in info.get('entries', [])]
-                
         except Exception as e:
-            # Print any errors that occur during extraction
             print(f"An error occurred: {e}")
 
-    # Return the list of extracted video links
     return video_links
-    
+
 # Function to generate SRT using Whisper ASR with language support
 def generate_srt_file(audio_file_path, output_dir, language):
     try:
         model = whisper.load_model("base")
-        
-        # Set language for transcription based on user choice
-        language_map = {
-            'english': 'en',
-            'hindi': 'hi',
-            'german': 'de'
-        }
+        language_map = {'english': 'en', 'hindi': 'hi', 'german': 'de'}
 
         if language.lower() not in language_map:
             print(f"Unsupported language selected: {language}. Defaulting to English.")
             language = 'english'
         
         print(f"Generating captions in {language.capitalize()} for {audio_file_path}...")
-        
-        # Transcribe audio using Whisper with the selected language
         result = model.transcribe(audio_file_path, language=language_map[language.lower()])
-        
-        # Save captions to an SRT file
+
         srt_file_path = os.path.join(output_dir, os.path.basename(audio_file_path).replace('.wav', '.srt'))
         with open(srt_file_path, 'w', encoding='utf-8') as srt_file:
             for segment in result['segments']:
@@ -124,8 +102,7 @@ def generate_srt_file(audio_file_path, output_dir, language):
     except Exception as e:
         print(f"An error occurred during SRT generation: {e}")
         return None
-    
-    
+
 # Updated function with proper handling of the last chunk's metadata
 def chunk_audio_and_srt(audio_file_path, srt_file_path, output_dir, language):
     # Create directories for caption chunks and audio chunks
@@ -196,7 +173,7 @@ def chunk_audio_and_srt(audio_file_path, srt_file_path, output_dir, language):
 
             # Append chunk metadata
             chunk_metadata.append({
-                'audio_filepath': os.path.join(*os.path.normpath(chunk_audio_path).split(os.path.sep)[os.path.normpath(chunk_audio_path).split(os.path.sep).index('audio_files'):]).replace('\\', '/'),
+                'audio_filepath': os.path.join(*os.path.normpath(chunk_audio_path).split(os.path.sep)[os.path.normpath(chunk_audio_path).split(os.path.sep).index('temp_files'):]).replace('\\', '/'),
                 'duration': current_chunk_duration,
                 'text': ' '.join(caption.strip() for start, end, caption in current_chunk_captions),
                 'lang_id': language_map.get(language.lower(), 'en')
@@ -226,7 +203,7 @@ def chunk_audio_and_srt(audio_file_path, srt_file_path, output_dir, language):
 
             # Append metadata for the final chunk
             chunk_metadata.append({
-                'audio_filepath': os.path.join(*os.path.normpath(chunk_audio_path).split(os.path.sep)[os.path.normpath(chunk_audio_path).split(os.path.sep).index('audio_files'):]).replace('\\', '/'),
+                'audio_filepath': os.path.join(*os.path.normpath(chunk_audio_path).split(os.path.sep)[os.path.normpath(chunk_audio_path).split(os.path.sep).index('temp_files'):]).replace('\\', '/'),
                 'duration': leftover_duration,
                 'text': ' '.join(caption.strip() for start, end, caption in current_chunk_captions),
                 'lang_id': language_map.get(language.lower(), 'en')
@@ -258,64 +235,50 @@ def chunk_audio_and_srt(audio_file_path, srt_file_path, output_dir, language):
 
 # Main function to process the YouTube links and create folders with language input
 def process_youtube_links(file_path, language):
-    # Step 1: Create 'audio_files' directory if not present
-    output_dir = 'audio_files'
+    main_op_dir = 'audio_files'
+    output_dir = 'temp_files'
+    os.makedirs(main_op_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
-
-    # Step 2: Create or load 'processed_links.txt'
-    processed_links_file = os.path.join(output_dir, 'processed_links.txt')
+    processed_links_file = os.path.join(main_op_dir, 'processed_links.txt')
+    temp_links_file = os.path.join(output_dir, 'temp_links.txt')
+    
 
     try:
         with open(file_path, 'r') as file:
             links = [line.strip() for line in file.readlines() if line.strip()]
 
-        # Step 3: Create a language folder based on user input (lowercase)
         language_folder = os.path.join(output_dir, language.lower())
         os.makedirs(language_folder, exist_ok=True)
 
-        processed_videos = []  # List to store info about processed videos
+        processed_videos = []
 
-        # Step 4: Process each link and create separate directories
         for link in links:
-            # Skip link if already processed
             if is_link_processed(link, processed_links_file):
                 print(f"Link already processed: {link}")
-                # Mark as already processed in response
-                processed_videos.append({
-                    'status': 'already_processed',
-                    'link': link
-                })
+                processed_videos.append({'status': 'already_processed', 'link': link})
                 continue
 
-            # If it's a playlist, extract video links
-            if "list" in link:
-                video_links = extract_video_links_from_playlist(link)
-            else:
-                video_links = [link]
+            video_links = extract_video_links_from_playlist(link) if "list" in link else [link]
 
             for video_link in video_links:
-                # Find the next available "video_x" folder number
-                existing_videos = [d for d in os.listdir(language_folder) if d.startswith("video_")]
-                video_nums = [int(v.split("_")[1]) for v in existing_videos] if existing_videos else []
-                next_video_num = max(video_nums, default=0) + 1
-                video_dir = os.path.join(language_folder, f"video_{next_video_num}")
+                video_id = extract_video_id(video_link)
+                if not video_id:
+                    print(f"Failed to extract video ID for {video_link}")
+                    continue
+
+                video_dir = os.path.join(language_folder, video_id)
                 os.makedirs(video_dir, exist_ok=True)
 
-                print(f"Processing video {next_video_num}: {video_link}")
+                print(f"Processing video {video_id}: {video_link}")
 
-                # Download and convert to wav
-                audio_file = download_and_convert_to_wav(video_link, video_dir, next_video_num)
+                audio_file = download_and_convert_to_wav(video_link, video_dir)
 
                 if audio_file:
-                    # Generate SRT file using Whisper with selected language
                     srt_file = generate_srt_file(audio_file, video_dir, language)
-
                     if srt_file:
                         print(f"Generated SRT in {language.capitalize()}: {srt_file}")
-                        
-                        # Get metadata file after chunking of audio and SRT
                         chunk_metadata = chunk_audio_and_srt(audio_file, srt_file, video_dir, language)
-
+                        
                         if chunk_metadata:
                             # Create JSON metadata file
                             metadata_file_path = os.path.join(video_dir, 'metadata.json')
@@ -327,17 +290,13 @@ def process_youtube_links(file_path, language):
                             print(f"Created metadata file: {metadata_file_path}")
                             processed_videos.append({
                                 'status': 'processed',
-                                'video_number': next_video_num,
                                 'link': video_link,
                                 'metadata_file': metadata_file_path
                             })
-
-                        # Remove original .wav and .srt files after successful chunking
+                        
                         os.remove(audio_file)
                         os.remove(srt_file)
-
-                        # Mark the link as processed
-                        mark_link_as_processed(link, processed_links_file)
+                        mark_link_as_processed(video_link, temp_links_file)
                     else:
                         print(f"Failed to generate SRT for {audio_file}")
                         return {"status": "error", "message": f"Failed to generate SRT for {audio_file}"}, 500
@@ -345,11 +304,7 @@ def process_youtube_links(file_path, language):
                     print(f"Failed to process {link}")
                     return {"status": "error", "message": f"Failed to process {link}"}, 500
 
-        # Return a successful response with metadata
-        return {
-            "status": "success",
-            "processed_videos": processed_videos
-        }, 200
+        return {"status": "success", "processed_videos": processed_videos}, 200
 
     except FileNotFoundError:
         print(f"The file {file_path} was not found.")

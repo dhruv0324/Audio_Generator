@@ -1,5 +1,24 @@
 import os
 
+# Function to extract video_id from url
+def extract_video_id(youtube_url):
+    try:
+        if 'v=' in youtube_url:
+            # Standard YouTube URL with video ID in 'v='
+            return youtube_url.split('v=')[1].split('&')[0]
+        elif 'youtu.be/' in youtube_url:
+            # Shortened YouTube URL
+            return youtube_url.split('youtu.be/')[1].split('?')[0]
+        elif 'embed/' in youtube_url:
+            # Embedded YouTube URL
+            return youtube_url.split('embed/')[1].split('?')[0]
+        else:
+            raise ValueError(f"Cannot extract video ID from {youtube_url}")
+    except Exception as e:
+        print(f"Error extracting video ID: {e}")
+        return None
+
+
 # Function to check if the link has been processed
 def is_link_processed(link, processed_links_file):
     if not os.path.exists(processed_links_file):

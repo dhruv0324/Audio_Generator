@@ -1,6 +1,8 @@
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 from backend.services.process_service import process_youtube_links
+from backend.services.transfer_service import transfer_data
+from backend.services.deletion_service import delete_temp_files_folder
 import os
 
 router = APIRouter()
@@ -39,3 +41,29 @@ async def process_file(file: UploadFile = File(...), language: str = Form(...)):
         # Clean up the uploaded file after processing
         if os.path.exists(file_path):
             os.remove(file_path)
+            
+# Define the route to transfer data from temp_files to audio_files
+@router.post("/transfer/")
+async def transfer_data_files():
+    try:
+        result = transfer_data()
+        if result["status"] == "success":
+            return JSONResponse(status_code=200, content=result)
+        else:
+            raise HTTPException(status_code=500, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error transferring data: {e}")
+
+# Define the route to delete the temp_files folder
+@router.delete("/delete_temp/")
+async def delete_temp_folder():
+    try:
+        result = delete_temp_files_folder()
+        if result["status"] == "success":
+            return JSONResponse(status_code=200, content=result)
+        else:
+            raise HTTPException(status_code=500, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting temp_files folder: {e}")
+
+

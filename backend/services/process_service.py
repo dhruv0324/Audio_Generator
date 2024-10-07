@@ -5,6 +5,7 @@ from pydub import AudioSegment
 import yt_dlp
 import whisper
 import json
+import uuid
 from backend.utils.utils import format_timestamp, append_srt_chunk, save_srt_chunk, convert_srt_time_to_seconds, mark_link_as_processed, is_link_processed, extract_video_id
 
 # Function to download video and convert to wav with 16000 Hz and mono
@@ -104,7 +105,7 @@ def generate_srt_file(audio_file_path, output_dir, language):
         return None
 
 # Updated function with proper handling of the last chunk's metadata
-def chunk_audio_and_srt(audio_file_path, srt_file_path, output_dir, language):
+def chunk_audio_and_srt(audio_file_path, srt_file_path, output_dir, language, unique_id):
     # Create directories for caption chunks and audio chunks
     caption_chunk_dir = os.path.join(output_dir, 'caption_chunks')
     audio_chunk_dir = os.path.join(output_dir, 'audio_chunks')
@@ -173,7 +174,7 @@ def chunk_audio_and_srt(audio_file_path, srt_file_path, output_dir, language):
 
             # Append chunk metadata
             chunk_metadata.append({
-                'audio_filepath': os.path.join(*os.path.normpath(chunk_audio_path).split(os.path.sep)[os.path.normpath(chunk_audio_path).split(os.path.sep).index('temp_files'):]).replace('\\', '/'),
+                'audio_filepath': os.path.join(*os.path.normpath(chunk_audio_path).split(os.path.sep)[os.path.normpath(chunk_audio_path).split(os.path.sep).index(f'temp_files_{unique_id}'):]).replace('\\', '/'),
                 'duration': current_chunk_duration,
                 'text': ' '.join(caption.strip() for start, end, caption in current_chunk_captions),
                 'lang_id': language_map.get(language.lower(), 'en')
@@ -203,7 +204,7 @@ def chunk_audio_and_srt(audio_file_path, srt_file_path, output_dir, language):
 
             # Append metadata for the final chunk
             chunk_metadata.append({
-                'audio_filepath': os.path.join(*os.path.normpath(chunk_audio_path).split(os.path.sep)[os.path.normpath(chunk_audio_path).split(os.path.sep).index('temp_files'):]).replace('\\', '/'),
+                'audio_filepath': os.path.join(*os.path.normpath(chunk_audio_path).split(os.path.sep)[os.path.normpath(chunk_audio_path).split(os.path.sep).index(f'temp_files_{unique_id}'):]).replace('\\', '/'),
                 'duration': leftover_duration,
                 'text': ' '.join(caption.strip() for start, end, caption in current_chunk_captions),
                 'lang_id': language_map.get(language.lower(), 'en')
@@ -236,12 +237,12 @@ def chunk_audio_and_srt(audio_file_path, srt_file_path, output_dir, language):
 # Main function to process the YouTube links and create folders with language input
 def process_youtube_links(file_path, language):
     main_op_dir = 'audio_files'
-    output_dir = 'temp_files'
+    unique_id = uuid.uuid4()  # Generate unique ID for each process
+    output_dir = f'temp_files_{unique_id}'
     os.makedirs(main_op_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
     processed_links_file = os.path.join(main_op_dir, 'processed_links.txt')
     temp_links_file = os.path.join(output_dir, 'temp_links.txt')
-    
 
     try:
         with open(file_path, 'r') as file:
@@ -277,8 +278,8 @@ def process_youtube_links(file_path, language):
                     srt_file = generate_srt_file(audio_file, video_dir, language)
                     if srt_file:
                         print(f"Generated SRT in {language.capitalize()}: {srt_file}")
-                        chunk_metadata = chunk_audio_and_srt(audio_file, srt_file, video_dir, language)
-                        
+                        chunk_metadata = chunk_audio_and_srt(audio_file, srt_file, video_dir, language, unique_id)
+
                         if chunk_metadata:
                             # Create JSON metadata file
                             metadata_file_path = os.path.join(video_dir, 'metadata.json')
@@ -286,14 +287,14 @@ def process_youtube_links(file_path, language):
                                 for chunk in chunk_metadata:
                                     json.dump(chunk, metadata_file, ensure_ascii=False)
                                     metadata_file.write('\n')
-                    
+
                             print(f"Created metadata file: {metadata_file_path}")
                             processed_videos.append({
                                 'status': 'processed',
                                 'link': video_link,
                                 'metadata_file': metadata_file_path
                             })
-                        
+
                         os.remove(audio_file)
                         os.remove(srt_file)
                         mark_link_as_processed(video_link, temp_links_file)
@@ -304,7 +305,8 @@ def process_youtube_links(file_path, language):
                     print(f"Failed to process {link}")
                     return {"status": "error", "message": f"Failed to process {link}"}, 500
 
-        return {"status": "success", "processed_videos": processed_videos}, 200
+        # Include the unique_id in the success response
+        return {"status": "success", "processed_videos": processed_videos, "unique_id": str(unique_id)}, 200
 
     except FileNotFoundError:
         print(f"The file {file_path} was not found.")

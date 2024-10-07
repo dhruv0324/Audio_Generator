@@ -1,0 +1,28 @@
+1
+00:03:16,000 --> 00:03:20,000
+Hey, Anna, how are you doing?
+
+2
+00:03:20,000 --> 00:03:22,000
+I'm good.
+
+3
+00:03:22,000 --> 00:03:24,000
+Thanks for asking.
+
+4
+00:03:24,000 --> 00:03:26,000
+How about you?
+
+5
+00:03:26,000 --> 00:03:29,000
+I'm very happy to see you.
+
+6
+00:03:30,000 --> 00:03:32,000
+I'm doing well too.
+
+7
+00:03:32,000 --> 00:03:37,000
+Hey, I was thinking of getting a pet from my house.
+

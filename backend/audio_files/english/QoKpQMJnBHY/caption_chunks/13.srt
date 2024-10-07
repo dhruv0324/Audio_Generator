@@ -1,0 +1,16 @@
+1
+00:04:47,000 --> 00:04:50,000
+Dogs are definitely cute and friendly.
+
+2
+00:04:51,000 --> 00:04:56,000
+But they also require a lot of attention and exercise.
+
+3
+00:04:56,000 --> 00:05:00,000
+Do you have the time and energy to take care of one?
+
+4
+00:05:00,000 --> 00:05:04,000
+I do have a pretty flexible schedule.
+

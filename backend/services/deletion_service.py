@@ -2,7 +2,8 @@ import os
 import shutil
 
 # In deletion_service.py
-def delete_temp_files_folder(temp_dir='temp_files'):
+def delete_temp_files_folder(unique_id):
+    temp_dir=f'temp_files_{unique_id}'
     try:
         # Check if temp_files directory exists
         if os.path.exists(temp_dir):

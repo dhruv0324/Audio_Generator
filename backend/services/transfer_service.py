@@ -2,7 +2,6 @@ import os
 import shutil
 import json
 
-
 # Function to update metadata filepath
 def update_metadata(temp_dir):
     for language in os.listdir(temp_dir):
@@ -18,7 +17,7 @@ def update_metadata(temp_dir):
                         updated_lines = []
                         for line in lines:
                             metadata = json.loads(line)
-                            metadata['audio_filepath'] = metadata['audio_filepath'].replace('temp_files', 'audio_files')
+                            metadata['audio_filepath'] = metadata['audio_filepath'].replace(temp_dir, 'audio_files')
                             updated_lines.append(json.dumps(metadata, ensure_ascii=False))
                         # Write updated lines back to the file
                         metadata_file.seek(0)
@@ -89,12 +88,12 @@ def transfer_folders(temp_dir, main_dir):
         print(f"An error occurred while transferring folders: {e}")
 
 
-def transfer_data():
+def transfer_data(unique_id):
     try:
         # Define paths
-        temp_links_file = os.path.join('temp_files', 'temp_links.txt')
+        temp_links_file = os.path.join(f'temp_files_{unique_id}', 'temp_links.txt')
         processed_links_file = os.path.join('audio_files', 'processed_links.txt')
-        temp_dir = 'temp_files'
+        temp_dir = f'temp_files_{unique_id}'
         main_dir = 'audio_files'
 
         # Step 1: Update metadata filepath

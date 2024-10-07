@@ -1,8 +1,10 @@
-from fastapi import APIRouter, File, UploadFile, Form, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Request
+from fastapi.responses import JSONResponse, StreamingResponse
 from backend.services.process_service import process_youtube_links
 from backend.services.transfer_service import transfer_data
 from backend.services.deletion_service import delete_temp_files_folder
+from backend.services.wordcloud_service import generate_wordcloud
+from backend.services.histogram_service import generate_histograms
 import os
 
 router = APIRouter()
@@ -29,12 +31,18 @@ async def process_file(file: UploadFile = File(...), language: str = Form(...)):
 
     # Call the service to process the file
     try:
-        result = process_youtube_links(file_path, language.lower())
-        if result:
-            # Return a success response with metadata
-            return JSONResponse(status_code=200, content={"message": "File processed successfully", "result": result})
+        result, status_code = process_youtube_links(file_path, language.lower())
+        if status_code == 200:
+            # Extract unique_id from the result if present
+            unique_id = result.get("unique_id", None)
+            # Return a success response with metadata and unique_id
+            return JSONResponse(status_code=200, content={
+                "message": "File processed successfully",
+                "result": result,
+                "unique_id": unique_id  # Include the unique_id in the response
+            })
         else:
-            raise HTTPException(status_code=500, detail="Failed to process the file.")
+            raise HTTPException(status_code=500, detail=f"Error: {result.get('message', 'Failed to process the file.')}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {e}")
     finally:
@@ -42,11 +50,19 @@ async def process_file(file: UploadFile = File(...), language: str = Form(...)):
         if os.path.exists(file_path):
             os.remove(file_path)
             
+                        
 # Define the route to transfer data from temp_files to audio_files
 @router.post("/transfer/")
-async def transfer_data_files():
+async def transfer_data_files(request: Request):
     try:
-        result = transfer_data()
+        body = await request.json()
+        unique_id = body.get("unique_id")
+
+        if not unique_id:
+            raise HTTPException(status_code=400, detail="Unique ID is required")
+
+        # Now pass the unique_id to the transfer_data function
+        result = transfer_data(unique_id)
         if result["status"] == "success":
             return JSONResponse(status_code=200, content=result)
         else:
@@ -56,14 +72,36 @@ async def transfer_data_files():
 
 # Define the route to delete the temp_files folder
 @router.delete("/delete_temp/")
-async def delete_temp_folder():
+async def delete_temp_folder(request: Request):
     try:
-        result = delete_temp_files_folder()
+        body = await request.json()
+        unique_id = body.get("unique_id")
+
+        if not unique_id:
+            raise HTTPException(status_code=400, detail="Unique ID is required")
+
+        # Now pass the unique_id to the delete_temp_files_folder function
+        result = delete_temp_files_folder(unique_id)
         if result["status"] == "success":
             return JSONResponse(status_code=200, content=result)
         else:
             raise HTTPException(status_code=500, detail=result["message"])
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting temp_files folder: {e}")
+    
+BASE_DIR = "audio_files/english"
+@router.get("/wordcloud/")
+async def get_wordcloud():
+    wordcloud_image = generate_wordcloud(BASE_DIR)
+    if wordcloud_image is None:
+        raise HTTPException(status_code=404, detail="Base directory does not exist.")
+    return wordcloud_image
 
-
+@router.get("/histograms")
+async def get_histograms():
+    img_buffer = generate_histograms(BASE_DIR)
+    
+    if img_buffer is None:
+        return {"error": "Base directory not found"}
+    
+    return StreamingResponse(img_buffer, media_type="image/png")

@@ -1,0 +1,28 @@
+1
+00:05:55,000 --> 00:05:58,000
+You look really down.
+
+2
+00:05:58,000 --> 00:06:02,000
+Did you have a fight with your girlfriend again?
+
+3
+00:06:02,000 --> 00:06:06,000
+Well me and my girlfriend broke up last night.
+
+4
+00:06:06,000 --> 00:06:09,000
+Oh no, I'm sorry to hear that.
+
+5
+00:06:09,000 --> 00:06:12,000
+What happened?
+
+6
+00:06:12,000 --> 00:06:14,000
+She was cheating on me Anna.
+
+7
+00:06:14,000 --> 00:06:16,000
+I can't believe it.
+

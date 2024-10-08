@@ -1,7 +1,7 @@
 <<<<<<< HEAD
 # Audio_Generator
 =======
-uvicorn backend.main:app --reload 
+uvicorn main:app --reload --port 8080
 
 cd frontend
 streamlit run app.py --server.port 8501

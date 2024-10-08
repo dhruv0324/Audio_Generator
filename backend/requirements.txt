@@ -1,5 +1,10 @@
 fastapi
-uvicorn
-yt-dlp
+uvicorn[standard]
+requests
 pydub
-whisper
+yt_dlp
+openai-whisper
+matplotlib
+nltk
+wordcloud
+

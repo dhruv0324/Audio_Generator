@@ -6,7 +6,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     ffmpeg \
     gcc \
     libffi-dev \
@@ -21,6 +22,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt  # Added --no-cache-dir to save space
+
+# Download NLTK data
+RUN python -m nltk.downloader stopwords
 
 # Copy application code
 COPY . .

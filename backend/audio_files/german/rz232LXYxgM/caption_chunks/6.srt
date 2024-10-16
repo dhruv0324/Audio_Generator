@@ -1,0 +1,28 @@
+1
+00:02:29,878 --> 00:02:31,878
+Was ist Ihr Lieblingsessen?
+
+2
+00:02:31,878 --> 00:02:33,878
+Mein Lieblingsessen ist Pizza.
+
+3
+00:02:33,878 --> 00:02:36,878
+Wir sind koster ein Kilo abgel.
+
+4
+00:02:36,878 --> 00:02:39,878
+Ein Kilo abgel, koster so ein Euro.
+
+5
+00:02:40,878 --> 00:02:42,878
+Das war der zweite Teile.
+
+6
+00:02:42,878 --> 00:02:44,878
+Bitte geben Sie mir eine Karte.
+
+7
+00:02:51,878 --> 00:02:53,878
+Nun kommen wir zum Drittenthal.
+

@@ -5,6 +5,7 @@ from backend.services.transfer_service import transfer_data
 from backend.services.deletion_service import delete_temp_files_folder
 from backend.services.wordcloud_service import generate_wordcloud
 from backend.services.histogram_service import generate_histograms
+from backend.services.fetch_service import fetch_video_folders, fetch_language_folders
 import os
 
 router = APIRouter()
@@ -89,19 +90,59 @@ async def delete_temp_folder(request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting temp_files folder: {e}")
     
-BASE_DIR = "audio_files/english"
+BASE_DIR = "audio_files"
 @router.get("/wordcloud/")
-async def get_wordcloud():
-    wordcloud_image = generate_wordcloud(BASE_DIR)
+async def get_wordcloud(language: str, video_code: str = None):
+    # Construct the directory path based on the presence of video_code
+    if video_code:
+        # Use the specific video folder
+        language_path = os.path.join(BASE_DIR, language.lower(), video_code)
+    else:
+        # Use the language folder
+        language_path = os.path.join(BASE_DIR, language.lower())
+    
+    wordcloud_image = generate_wordcloud(language_path, language.lower())
+    
     if wordcloud_image is None:
         raise HTTPException(status_code=404, detail="Base directory does not exist.")
+    
     return wordcloud_image
 
-@router.get("/histograms")
-async def get_histograms():
-    img_buffer = generate_histograms(BASE_DIR)
+@router.get("/histograms/")
+async def get_histograms(language: str, video_code: str = None):
+    # Construct the directory path based on the presence of video_code
+    if video_code:
+        # Use the specific video folder
+        language_path = os.path.join(BASE_DIR, language.lower(), video_code)
+    else:
+        # Use the language folder
+        language_path = os.path.join(BASE_DIR, language.lower())
+    
+    img_buffer = generate_histograms(language_path, language.lower())
     
     if img_buffer is None:
         return {"error": "Base directory not found"}
     
     return StreamingResponse(img_buffer, media_type="image/png")
+
+# Endpoint to fetch video folder names for a given language
+@router.get("/video_folders/")
+async def get_video_folders(language: str):
+    try:
+        video_folders = fetch_video_folders(language.lower(), BASE_DIR)
+        if "error" in video_folders:
+            raise HTTPException(status_code=404, detail=video_folders["error"])
+        return {"video_folders": video_folders}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching video folders: {e}")
+
+# Endpoint to fetch language folder names
+@router.get("/language_folders/")
+async def get_language_folders():
+    try:
+        language_folders = fetch_language_folders(BASE_DIR)
+        if "error" in language_folders:
+            raise HTTPException(status_code=404, detail=language_folders["error"])
+        return {"language_folders": language_folders}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching language folders: {e}")

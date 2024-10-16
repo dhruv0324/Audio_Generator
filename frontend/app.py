@@ -1,65 +1,119 @@
-import time
 import streamlit as st
 import requests
 
-# Define the backend API URLs
 BACKEND_URL_PROCESS = "http://localhost:8080/process/"
 BACKEND_URL_TRANSFER = "http://localhost:8080/transfer/"
 BACKEND_URL_DELETE = "http://localhost:8080/delete_temp/"
 BACKEND_URL_WORDCLOUD = "http://localhost:8080/wordcloud/"
-BACKEND_URL_HISTOGRAM = "http://localhost:8080/histograms/"  
+BACKEND_URL_HISTOGRAM = "http://localhost:8080/histograms/"
+BACKEND_URL_LANGUAGES = "http://localhost:8080/language_folders/"
+BACKEND_URL_VIDEOS = "http://localhost:8080/video_folders/"
 
 # App title and description
 st.title("Audio Data Generator 🎥➡️📝")
 
 st.markdown(""" 
     Welcome to the Audio Data Generator! This app helps you create audio chunks 
-    and corresponding SRT files from multiple YouTube videos. It's perfect for building a dataset 
-    of audio segments with accurate transcriptions. Simply upload a text file containing YouTube links, select your desired language, 
-    and let our app do the rest.
+    and corresponding SRT files from multiple YouTube videos. Simply upload a text file containing YouTube links, 
+    select your desired language, and let our app do the rest.
+
+    In addition to generating audio chunks and SRT files, this app also offers **visualization features** like **word clouds** and **histograms** to help you analyze the text data. These visualizations allow you to see the most common words and the distribution of filler versus non-filler words.
 """)
 
-# Initialize session state for word cloud
-if 'wordcloud' not in st.session_state:
-    st.session_state.wordcloud = None
+st.header("How to use the Visualizations (optional):") 
+st.markdown(""" 
+    1. **Select Language:** Choose the language from the dropdown menu for which you want to generate visualizations.
+    2. **Optional Video Selection:** If you want to generate visualizations for a specific video, you can select a video from the dropdown (this step is optional).
+    3. **Generate Word Cloud and Histogram:** Click the 'Generate Visualization' button to generate a **word cloud** and **histogram** based on the transcription data.
+        - The **Word Cloud** will visually display the most frequent words used in the transcription.
+        - The **Histogram** will show the distribution of **filler** and **non-filler** words in the transcription.
+    4. You can analyze these visualizations to get insights into word frequencies and content patterns within the transcribed audio.
+""")
 
-# Fetch the word cloud only if it has not been fetched yet
-if st.session_state.wordcloud is None:
-    try:
-        response = requests.get(BACKEND_URL_WORDCLOUD)
-        if response.status_code == 200:
-            st.session_state.wordcloud = response.content  # Store word cloud image in session state
+
+# Session state management for dropdowns (only run on page reload)
+if 'languages' not in st.session_state:
+    # Function to fetch languages
+    def get_languages():
+        try:
+            response = requests.get(BACKEND_URL_LANGUAGES)
+            if response.status_code == 200:
+                return response.json().get("language_folders", [])
+            else:
+                st.error("Could not retrieve language options. Please try again later.")
+                return []
+        except Exception as e:
+            st.error(f"Error fetching languages: {e}")
+            return []
+    
+    # Fetch languages only once on page load
+    st.session_state.languages = get_languages()
+    st.session_state.selected_language = ""
+
+# Dropdown for language selection
+selected_language = st.selectbox("Select your language", [""] + st.session_state.languages)
+
+# Fetch videos only if a language is selected and it's a new selection
+if selected_language and (st.session_state.selected_language != selected_language):
+    st.session_state.selected_language = selected_language
+
+    # Function to fetch videos for the selected language
+    def get_videos(language):
+        try:
+            response = requests.get(f"{BACKEND_URL_VIDEOS}?language={language}")
+            if response.status_code == 200:
+                return response.json().get("video_folders", [])
+            else:
+                st.error("Could not retrieve video options. Please try again later.")
+                return []
+        except Exception as e:
+            st.error(f"Error fetching videos: {e}")
+            return []
+
+    # Fetch videos and store in session state
+    st.session_state.videos = get_videos(selected_language)
+
+# Dropdown for video selection (optional)
+if selected_language:
+    selected_video = st.selectbox("Select your video (optional)", [""] + st.session_state.videos)
+
+# Visualizations
+if selected_language:
+    if st.button("Generate Visualisations"):
+        if selected_video == "":
+            # Only language selected
+            wordcloud_response = requests.get(f"{BACKEND_URL_WORDCLOUD}?language={selected_language.lower()}")
+            histogram_response = requests.get(f"{BACKEND_URL_HISTOGRAM}?language={selected_language.lower()}")
+
+            if wordcloud_response.status_code == 200:
+                st.image(wordcloud_response.content, caption="Generated Wordcloud")
+            else:
+                st.error("Error generating wordcloud.")
+
+            if histogram_response.status_code == 200:
+                st.image(histogram_response.content, caption="Generated Histogram")
+            else:
+                st.error("Error generating histogram.")
         else:
-            st.error("Could not retrieve word cloud. Please try again later.")
-    except Exception as e:
-        st.error(f"An error occurred while fetching the word cloud: {e}")
+            # Both language and video selected
+            wordcloud_response = requests.get(
+                f"{BACKEND_URL_WORDCLOUD}?language={selected_language.lower()}&video_code={selected_video}"
+            )
+            histogram_response = requests.get(
+                f"{BACKEND_URL_HISTOGRAM}?language={selected_language.lower()}&video_code={selected_video}"
+            )
 
-# Display the word cloud if available
-if st.session_state.wordcloud:
-    st.header("Word Cloud")
-    st.image(st.session_state.wordcloud, caption="Generated Word Cloud", use_column_width=True)
+            if wordcloud_response.status_code == 200:
+                st.image(wordcloud_response.content, caption="Generated Wordcloud")
+            else:
+                st.error("Error generating wordcloud.")
 
-# Initialize session state for histogram
-if 'histogram' not in st.session_state:
-    st.session_state.histogram = None
+            if histogram_response.status_code == 200:
+                st.image(histogram_response.content, caption="Generated Histogram")
+            else:
+                st.error("Error generating histogram.")
 
-# Fetch the histogram only if it has not been fetched yet
-if st.session_state.histogram is None:
-    try:
-        response = requests.get(BACKEND_URL_HISTOGRAM)
-        if response.status_code == 200:
-            st.session_state.histogram = response.content  # Store histogram image in session state
-        else:
-            st.error("Could not retrieve histogram. Please try again later.")
-    except Exception as e:
-        st.error(f"An error occurred while fetching the histogram: {e}")
-
-# Display the histogram if available
-if st.session_state.histogram:
-    st.header("Histogram")
-    st.image(st.session_state.histogram, caption="Generated Histogram", use_column_width=True)
-
-# Instructions
+# Instructions and File Upload Section
 st.header("How to use:")
 st.markdown(""" 
     1. Prepare a .txt file with one YouTube link per line.
@@ -78,28 +132,21 @@ if 'file_processed' not in st.session_state:
 if 'unique_id' not in st.session_state:
     st.session_state.unique_id = None
 
-# New session state variables for file and language
-if 'uploaded_file' not in st.session_state:
-    st.session_state.uploaded_file = None
-
-if 'language' not in st.session_state:
-    st.session_state.language = ""
-
 # File uploader for .txt file
-st.session_state.uploaded_file = st.file_uploader("Upload a text file with YouTube links", type=["txt"])
+uploaded_file = st.file_uploader("Upload a text file with YouTube links", type=["txt"])
 
-# Dropdown for language selection
-st.session_state.language = st.selectbox("Select a language for transcription", ["", "English", "Hindi", "German"])
+# Dropdown for language selection in file processing section
+file_language = st.selectbox("Select a language for transcription", ["", "English", "Hindi", "German"])
 
 # Button to trigger processing
-if st.session_state.uploaded_file is not None and st.session_state.language != "":
+if uploaded_file and file_language != "":
     if st.button("Submit", key="submit_button"):
         # Convert file to bytes to send it to FastAPI
-        file_bytes = st.session_state.uploaded_file.read()
+        file_bytes = uploaded_file.read()
 
         # Create a dictionary for the POST request with the file and form data
-        files = {"file": (st.session_state.uploaded_file.name, file_bytes)}
-        data = {"language": st.session_state.language.lower()}
+        files = {"file": (uploaded_file.name, file_bytes)}
+        data = {"language": file_language.lower()}
 
         # Make the API request to the FastAPI backend
         try:

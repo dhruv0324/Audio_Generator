@@ -1,0 +1,24 @@
+1
+00:01:42,000 --> 00:01:46,000
+In die Gelbetonne kommen Kunststoffe, Verpackungen und Dosen.
+
+2
+00:01:46,000 --> 00:01:50,000
+Alles das sind Sachen, die recygelt werden können.
+
+3
+00:01:50,000 --> 00:01:56,000
+In einigen Städten gibt es keine gelben Tonnen, sondern nur gelbe Säcke.
+
+4
+00:01:56,000 --> 00:02:00,000
+Der Rest kommt in die schwarze Tonne, zum Restmüll.
+
+5
+00:02:00,000 --> 00:02:03,000
+Diese Tonne ist manchmal auch grau.
+
+6
+00:02:03,000 --> 00:02:09,000
+Neben den Hausmüll gibt es auch speziellen Müll, der nicht zu Hause entsorgt werden kann.
+

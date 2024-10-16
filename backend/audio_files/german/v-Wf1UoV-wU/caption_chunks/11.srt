@@ -1,0 +1,20 @@
+1
+00:03:46,000 --> 00:03:50,000
+Bei der Bundestagswahl gibt es immer zwei Stimmen.
+
+2
+00:03:50,000 --> 00:03:56,000
+Und diese Stimmen sind beide wichtig, denn man möchte mit den beiden Stimmen darauf achten,
+
+3
+00:03:56,000 --> 00:04:00,000
+dass es eine gute, ausgewogene Balance gibt.
+
+4
+00:04:00,000 --> 00:04:08,000
+Es gibt einmal eine Direktstimme, die Erststimme und mit dieser Erststimme wähle ich direkt einen Kandidaten
+
+5
+00:04:08,000 --> 00:04:13,000
+aus meiner Region in das Parlament, in den deutschen Bundestag.
+

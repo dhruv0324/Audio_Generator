@@ -1,0 +1,16 @@
+1
+00:08:06,360 --> 00:08:13,360
+Would you be interested in attending the conference next month?
+
+2
+00:08:13,360 --> 00:08:18,360
+Would you be interested in attending the conference next month?
+
+3
+00:08:18,360 --> 00:08:23,360
+Please make sure to lock the door when you leave.
+
+4
+00:08:23,360 --> 00:08:29,360
+Please make sure to lock the door when you leave.
+

@@ -1,0 +1,16 @@
+1
+00:06:12,079 --> 00:06:14,480
+Could you please send me the report by the end of the day?
+
+2
+00:06:18,240 --> 00:06:23,519
+Could you please send me the report by the end of the day?
+
+3
+00:06:23,519 --> 00:06:30,959
+Could you let me know when the meeting is scheduled?
+
+4
+00:06:30,959 --> 00:06:38,160
+Could you let me know when the meeting is scheduled?
+

@@ -1,0 +1,16 @@
+1
+00:04:13,000 --> 00:04:18,000
+Und dann gibt es eine zweite Stimme und mit dieser zweite Stimme wählt man eine Partei.
+
+2
+00:04:18,000 --> 00:04:24,000
+Und die Partei hat dann eine Liste mit Kandidaten und je nachdem, wie viel Stimmen sie bekommt,
+
+3
+00:04:24,000 --> 00:04:27,000
+schickt sie dann Leute in dem Bundestag.
+
+4
+00:04:27,000 --> 00:04:33,000
+Und der Bundestag besteht tatsächlich ungefähr zu Hälfte aus den Erststimmen, also den Direktkandidaten
+

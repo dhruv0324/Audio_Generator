@@ -1,0 +1,28 @@
+1
+00:00:48,320 --> 00:00:51,280
+You can say, Hey John.
+
+2
+00:00:51,280 --> 00:00:53,759
+How's it going?
+
+3
+00:00:53,759 --> 00:00:57,759
+Hey John, how's it going?
+
+4
+00:00:57,759 --> 00:01:00,320
+Absolutely.
+
+5
+00:01:00,320 --> 00:01:05,599
+The next phrase is, Catch you later.
+
+6
+00:01:05,599 --> 00:01:08,560
+Catch you later.
+
+7
+00:01:08,560 --> 00:01:13,760
+Native speakers use the phrase, Catch you later, as an informal way to say goodbye.
+

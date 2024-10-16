@@ -1,0 +1,16 @@
+1
+00:06:38,160 --> 00:06:45,360
+I need you to complete the tasks before the deadline.
+
+2
+00:06:45,759 --> 00:06:50,720
+Will you be able to handle the presentation tomorrow?
+
+3
+00:06:51,759 --> 00:06:59,600
+Will you be able to handle the presentation tomorrow?
+
+4
+00:07:03,439 --> 00:07:11,680
+Can you please pick up some groceries on your way home?
+

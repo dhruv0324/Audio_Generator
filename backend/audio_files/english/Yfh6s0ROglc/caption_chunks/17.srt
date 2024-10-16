@@ -1,0 +1,12 @@
+1
+00:07:15,360 --> 00:07:22,360
+Can you please pick up some groceries on your way home?
+
+2
+00:07:22,360 --> 00:07:29,360
+Would you mind double checking the details for accuracy?
+
+3
+00:07:29,360 --> 00:07:35,360
+Would you mind double checking the details for accuracy?
+

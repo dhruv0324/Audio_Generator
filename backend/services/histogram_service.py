@@ -7,33 +7,44 @@ import string
 from nltk.corpus import stopwords
 
 # Your clean_text function remains the same
-def clean_text(text):
+def clean_text(text, language):
     text = text.lower()
     text = text.translate(str.maketrans('', '', string.punctuation))
-    stop_words = set(stopwords.words('english'))
+    stop_words = set(stopwords.words(language))
     words = text.split()
     cleaned_words = [word for word in words if word not in stop_words]
     removed_stopwords = [word for word in words if word in stop_words]
     return ' '.join(cleaned_words), ' '.join(removed_stopwords)
 
-def generate_histograms(base_dir):
+def generate_histograms(base_dir, language):
     if not os.path.exists(base_dir):
         return None
 
     all_cleaned_text = []
     all_stopwords = []
 
-    for video_folder in os.listdir(base_dir):
-        video_path = os.path.join(base_dir, video_folder)
-        metadata_path = os.path.join(video_path, 'metadata.json')
-        
-        if os.path.exists(metadata_path):
-            with open(metadata_path, 'r') as f:
-                for line in f:
-                    data = json.loads(line)
-                    cleaned_text, stopwords_text = clean_text(data['text'])
-                    all_cleaned_text.append(cleaned_text)
-                    all_stopwords.append(stopwords_text)
+    # Check if the base_dir is a video folder (check if metadata.json exists)
+    metadata_path = os.path.join(base_dir, 'metadata.json')
+    if os.path.exists(metadata_path):
+        with open(metadata_path, 'r') as f:
+            for line in f:
+                data = json.loads(line)
+                cleaned_text, stopwords_text = clean_text(data['text'], language)
+                all_cleaned_text.append(cleaned_text)
+                all_stopwords.append(stopwords_text)
+    else:
+        # If it's a language folder, iterate through video folders
+        for video_folder in os.listdir(base_dir):
+            video_path = os.path.join(base_dir, video_folder)
+            metadata_path = os.path.join(video_path, 'metadata.json')
+            
+            if os.path.exists(metadata_path):
+                with open(metadata_path, 'r') as f:
+                    for line in f:
+                        data = json.loads(line)
+                        cleaned_text, stopwords_text = clean_text(data['text'], language)
+                        all_cleaned_text.append(cleaned_text)
+                        all_stopwords.append(stopwords_text)
 
     combined_cleaned_text = ' '.join(all_cleaned_text)
     combined_stopwords = ' '.join(all_stopwords)
@@ -71,4 +82,3 @@ def generate_histograms(base_dir):
     plt.close(fig)  # Close the figure to free up memory
     
     return img_buffer
-
